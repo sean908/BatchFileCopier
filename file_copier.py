@@ -128,6 +128,40 @@ def check_dependencies():
             print("程序运行需要 tqdm 依赖，请手动安装后再运行。", file=sys.stderr)
             sys.exit(1)
 
+def analyze_file_types(directory):
+    """分析目录中的文件类型及其数量"""
+    if not os.path.exists(directory):
+        print(f"错误：目录 '{directory}' 不存在", file=sys.stderr)
+        return
+    
+    file_types = {}
+    total_files = 0
+    
+    # 遍历目录
+    for root, _, files in os.walk(directory):
+        for file in files:
+            total_files += 1
+            # 获取文件扩展名
+            ext = os.path.splitext(file)[1].lower()
+            if not ext:  # 如果没有扩展名
+                ext = "无扩展名"
+            file_types[ext] = file_types.get(ext, 0) + 1
+    
+    # 打印结果
+    print(f"\n目录 '{directory}' 中的文件分析结果：")
+    print(f"总文件数: {total_files}")
+    print("\n文件类型统计：")
+    print("-" * 40)
+    print(f"{'文件类型':<15} {'数量':<10} {'百分比':<10}")
+    print("-" * 40)
+    
+    # 按数量降序排序
+    sorted_types = sorted(file_types.items(), key=lambda x: x[1], reverse=True)
+    for ext, count in sorted_types:
+        percentage = (count / total_files) * 100
+        print(f"{ext:<15} {count:<10} {percentage:.2f}%")
+    print("-" * 40)
+
 def main():
     # 创建自定义用法说明
     usage = """%(prog)s 源目录 目标目录 [后缀名...] [选项]
@@ -145,7 +179,9 @@ def main():
                    要排除的文件名关键字（不含扩展名）
   -x, --move       使用移动而不是复制
   -k, --keep       保留原有的文件夹结构（默认不保留）
-  -g, --gui        启动图形用户界面"""
+  -g, --gui        启动图形用户界面
+  -l LIST, --list LIST
+                   分析指定目录中的文件类型及其数量"""
     
     parser = argparse.ArgumentParser(description='文件复制/剪切工具', usage=usage, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('source', nargs='?', help='源目录路径')
@@ -156,9 +192,15 @@ def main():
     parser.add_argument('-x', '--move', action='store_true', help='使用移动而不是复制')
     parser.add_argument('-k', '--keep', action='store_true', help='保留原有的文件夹结构（默认不保留）')
     parser.add_argument('-g', '--gui', action='store_true', help='启动图形用户界面')
+    parser.add_argument('-l', '--list', help='分析指定目录中的文件类型及其数量')
     
     # 解析命令行参数
     args = parser.parse_args()
+    
+    # 如果指定了-l参数，只执行文件分析
+    if args.list:
+        analyze_file_types(args.list)
+        return
     
     # 检查是否启动GUI
     if args.gui:
