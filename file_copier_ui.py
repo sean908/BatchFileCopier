@@ -2,14 +2,14 @@
 import os
 import sys
 import tkinter as tk
-from tkinter import filedialog, ttk, messagebox
-from file_copier import process_files, check_dependencies
+from tkinter import filedialog, ttk, messagebox, scrolledtext
+from file_copier import process_files, check_dependencies, analyze_file_types
 
 class FileCopierUI:
     def __init__(self, root):
         self.root = root
         self.root.title("文件复制工具")
-        self.root.geometry("600x300")
+        self.root.geometry("800x600")  # 增加窗口大小
         self.root.resizable(True, True)
         
         # 检查依赖
@@ -27,6 +27,7 @@ class FileCopierUI:
         self.source_entry = ttk.Entry(source_frame)
         self.source_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
         ttk.Button(source_frame, text="浏览...", command=self.browse_source).pack(side=tk.LEFT, padx=5)
+        ttk.Button(source_frame, text="扫描", command=self.scan_source).pack(side=tk.LEFT, padx=5)
         
         # 目标目录选择
         dest_frame = ttk.Frame(main_frame)
@@ -72,6 +73,14 @@ class FileCopierUI:
         self.exclude_entry = ttk.Entry(exclude_frame)
         self.exclude_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
         
+        # 输出显示区域
+        output_frame = ttk.Frame(main_frame)
+        output_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        
+        ttk.Label(output_frame, text="输出信息:").pack(anchor=tk.W)
+        self.output_text = scrolledtext.ScrolledText(output_frame, wrap=tk.WORD, height=10)
+        self.output_text.pack(fill=tk.BOTH, expand=True)
+        
         # 执行按钮
         button_frame = ttk.Frame(main_frame)
         button_frame.pack(fill=tk.X, pady=10)
@@ -97,6 +106,44 @@ class FileCopierUI:
         if directory:
             self.dest_entry.delete(0, tk.END)
             self.dest_entry.insert(0, directory)
+    
+    def scan_source(self):
+        """扫描源目录中的文件类型"""
+        source_dir = self.source_entry.get().strip()
+        
+        if not source_dir or not os.path.exists(source_dir):
+            messagebox.showerror("错误", "请选择有效的源目录")
+            return
+        
+        # 清空输出区域
+        self.output_text.delete(1.0, tk.END)
+        
+        # 重定向标准输出到文本区域
+        class TextRedirector:
+            def __init__(self, text_widget):
+                self.text_widget = text_widget
+            
+            def write(self, string):
+                self.text_widget.insert(tk.END, string)
+                self.text_widget.see(tk.END)
+            
+            def flush(self):
+                pass
+        
+        # 保存原始标准输出
+        original_stdout = sys.stdout
+        try:
+            # 重定向输出
+            sys.stdout = TextRedirector(self.output_text)
+            
+            # 执行扫描
+            analyze_file_types(source_dir)
+            
+        except Exception as e:
+            self.output_text.insert(tk.END, f"\n扫描过程中发生错误: {str(e)}\n")
+        finally:
+            # 恢复原始标准输出
+            sys.stdout = original_stdout
     
     def execute(self):
         """执行文件处理操作"""
@@ -148,7 +195,27 @@ class FileCopierUI:
         self.status_var.set(f"正在{op_type}文件...")
         self.root.update()
         
+        # 清空输出区域
+        self.output_text.delete(1.0, tk.END)
+        
+        # 重定向标准输出到文本区域
+        class TextRedirector:
+            def __init__(self, text_widget):
+                self.text_widget = text_widget
+            
+            def write(self, string):
+                self.text_widget.insert(tk.END, string)
+                self.text_widget.see(tk.END)
+            
+            def flush(self):
+                pass
+        
+        # 保存原始标准输出
+        original_stdout = sys.stdout
         try:
+            # 重定向输出
+            sys.stdout = TextRedirector(self.output_text)
+            
             # 执行文件处理
             process_files(
                 source_dir,
@@ -164,6 +231,9 @@ class FileCopierUI:
         except Exception as e:
             messagebox.showerror("错误", f"操作过程中发生错误: {str(e)}")
             self.status_var.set("发生错误")
+        finally:
+            # 恢复原始标准输出
+            sys.stdout = original_stdout
 
 def main():
     root = tk.Tk()
