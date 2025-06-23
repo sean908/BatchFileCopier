@@ -50,6 +50,9 @@ class FileCopierUI:
         self.keep_structure_var = tk.BooleanVar(value=False)
         ttk.Checkbutton(options_frame, text="保留原有文件夹结构", variable=self.keep_structure_var).pack(side=tk.LEFT, padx=10)
         
+        self.log_enabled_var = tk.BooleanVar(value=True)
+        ttk.Checkbutton(options_frame, text="记录日志", variable=self.log_enabled_var).pack(side=tk.LEFT, padx=10)
+        
         # 文件后缀
         ext_frame = ttk.Frame(main_frame)
         ext_frame.pack(fill=tk.X, pady=5)
@@ -162,6 +165,7 @@ class FileCopierUI:
         # 获取其他参数
         is_move = self.operation_var.get() == "剪切"
         keep_structure = self.keep_structure_var.get()
+        log_enabled = self.log_enabled_var.get()
         
         # 处理文件后缀
         extensions_text = self.extensions_entry.get().strip()
@@ -187,6 +191,7 @@ class FileCopierUI:
             confirm_msg += f"包含关键词: {', '.join(include_keywords)}\n"
         if exclude_keywords:
             confirm_msg += f"排除关键词: {', '.join(exclude_keywords)}\n"
+        confirm_msg += f"日志记录: {'启用' if log_enabled else '禁用'}\n"
         
         if not messagebox.askyesno("确认操作", confirm_msg):
             return
@@ -206,15 +211,20 @@ class FileCopierUI:
             def write(self, string):
                 self.text_widget.insert(tk.END, string)
                 self.text_widget.see(tk.END)
+                self.text_widget.update()  # 确保UI更新
             
             def flush(self):
                 pass
         
         # 保存原始标准输出
         original_stdout = sys.stdout
+        original_stderr = sys.stderr
+        
         try:
             # 重定向输出
-            sys.stdout = TextRedirector(self.output_text)
+            redirector = TextRedirector(self.output_text)
+            sys.stdout = redirector
+            sys.stderr = redirector
             
             # 执行文件处理
             process_files(
@@ -224,16 +234,29 @@ class FileCopierUI:
                 include_keywords,
                 exclude_keywords,
                 is_move,
-                keep_structure
+                keep_structure,
+                log_enabled
             )
+            
+            # 确保所有输出都被显示
+            self.output_text.update()
+            self.root.update()
+            
             messagebox.showinfo("完成", f"文件{op_type}操作已完成")
             self.status_var.set("就绪")
+            
         except Exception as e:
-            messagebox.showerror("错误", f"操作过程中发生错误: {str(e)}")
+            error_msg = f"操作过程中发生错误: {str(e)}"
+            self.output_text.insert(tk.END, f"\n{error_msg}\n")
+            messagebox.showerror("错误", error_msg)
             self.status_var.set("发生错误")
+            
         finally:
             # 恢复原始标准输出
             sys.stdout = original_stdout
+            sys.stderr = original_stderr
+            self.output_text.update()
+            self.root.update()
 
 def main():
     root = tk.Tk()

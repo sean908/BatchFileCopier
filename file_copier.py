@@ -61,13 +61,15 @@ def get_all_files(source_dir):
             all_files.append(os.path.join(root, file))
     return all_files
 
-def process_files(source_dir, dest_dir, extensions, include_keywords, exclude_keywords, is_move=False, keep_structure=False):
+def process_files(source_dir, dest_dir, extensions, include_keywords, exclude_keywords, is_move=False, keep_structure=False, log_enabled=True):
     """处理文件（复制或移动）"""
     # 确保目标目录存在
     os.makedirs(dest_dir, exist_ok=True)
     
     # 设置日志记录器
-    logger = setup_logger(dest_dir)
+    logger = None
+    if log_enabled:
+        logger = setup_logger(dest_dir)
     
     # 获取所有文件
     all_files = get_all_files(source_dir)
@@ -99,14 +101,19 @@ def process_files(source_dir, dest_dir, extensions, include_keywords, exclude_ke
             
             # 记录日志
             op_type = "移动" if is_move else "复制"
-            logger.info(f"{op_type}文件: {file_path} -> {dest_path}")
+            log_msg = f"{op_type}文件: {file_path} -> {dest_path}"
+            print(log_msg)  # 始终在控制台输出
+            if logger:
+                logger.info(log_msg)  # 只在启用日志时记录到文件
             
             # 更新进度条
             pbar.update(1)
             
         except Exception as e:
-            logger.error(f"处理文件 {file_path} 时发生错误: {str(e)}")
-            print(f"\n处理文件 {file_path} 时发生错误: {str(e)}", file=sys.stderr)
+            error_msg = f"处理文件 {file_path} 时发生错误: {str(e)}"
+            print(error_msg, file=sys.stderr)
+            if logger:
+                logger.error(error_msg)
     
     pbar.close()
 
