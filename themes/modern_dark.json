@@ -1,0 +1,16 @@
+{
+    "name": "Modern Dark Theme",
+    "description": "现代化深色主题方案",
+    "colors": {
+        "window": ["#1a1a1a", "#0d0d0d"],
+        "frame": ["#212121", "#161616"],
+        "button": ["#6200ea", "#7c4dff"],
+        "button_hover": ["#5000ca", "#651fff"],
+        "text": ["#ffffff", "#e0e0e0"],
+        "text_disabled": ["#666666", "#444444"],
+        "progress": ["#6200ea", "#7c4dff"],
+        "border": ["#333333", "#1a1a1a"],
+        "error": ["#ff5252", "#ff1744"],
+        "success": ["#69f0ae", "#00e676"]
+    }
+}

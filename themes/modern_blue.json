@@ -1,0 +1,16 @@
+{
+    "name": "Modern Blue Theme",
+    "description": "现代化蓝色主题方案",
+    "colors": {
+        "window": ["#f0f0f0", "#1a1a1a"],
+        "frame": ["#ffffff", "#212121"],
+        "button": ["#1f6aa5", "#147ab3"],
+        "button_hover": ["#165a8a", "#1268a1"],
+        "text": ["#000000", "#ffffff"],
+        "text_disabled": ["#888888", "#666666"],
+        "progress": ["#1f6aa5", "#147ab3"],
+        "border": ["#cccccc", "#333333"],
+        "error": ["#d32f2f", "#f44336"],
+        "success": ["#388e3c", "#4caf50"]
+    }
+}
