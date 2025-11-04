@@ -263,6 +263,17 @@ class ModernFileCopierUI:
 
         self.output_text = ctk.CTkTextbox(output_frame, font=ctk.CTkFont(family="Consolas", size=11))
         self.output_text.grid(row=0, column=0, padx=15, pady=15, sticky="nsew")
+        # 为文本输出设置固定 tab stops，便于三列表格像素对齐（类型/数量/百分比）
+        try:
+            # 尝试直接配置 CTkTextbox
+            self.output_text.configure(tabs=(280, 'left', 420, 'right', 520, 'right'))
+        except Exception:
+            try:
+                # 兼容内部 tkinter.Text 的配置方式
+                if hasattr(self.output_text, "_textbox"):
+                    self.output_text._textbox.configure(tabs=(280, 'left', 420, 'right', 520, 'right'))
+            except Exception:
+                pass
 
         # 按钮框架
         button_frame = ctk.CTkFrame(self.root, fg_color=FRAME_COLOR, border_color=BORDER_COLOR, border_width=1)
@@ -461,8 +472,8 @@ class ModernFileCopierUI:
             # 重定向输出
             sys.stdout = TextRedirector(self.output_text)
 
-            # 执行扫描
-            analyze_file_types(source_dir)
+            # 执行扫描（使用制表符输出，配合 tab stops 像素对齐）
+            analyze_file_types(source_dir, tabbed=True)
 
         except Exception as e:
             self.output_text.insert("end", f"\n扫描过程中发生错误: {str(e)}\n")

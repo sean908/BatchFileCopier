@@ -83,6 +83,11 @@ class FileCopierUI:
         ttk.Label(output_frame, text="输出信息:").pack(anchor=tk.W)
         self.output_text = scrolledtext.ScrolledText(output_frame, wrap=tk.WORD, height=10)
         self.output_text.pack(fill=tk.BOTH, expand=True)
+        # 设置 tab stops，用于三列（类型/数量/百分比）对齐
+        try:
+            self.output_text.configure(tabs=(280, 'left', 420, 'right', 520, 'right'))
+        except Exception:
+            pass
         
         # 执行按钮
         button_frame = ttk.Frame(main_frame)
@@ -138,9 +143,9 @@ class FileCopierUI:
         try:
             # 重定向输出
             sys.stdout = TextRedirector(self.output_text)
-            
-            # 执行扫描
-            analyze_file_types(source_dir)
+
+            # 执行扫描（使用制表符输出，配合 tab stops 像素对齐）
+            analyze_file_types(source_dir, tabbed=True)
             
         except Exception as e:
             self.output_text.insert(tk.END, f"\n扫描过程中发生错误: {str(e)}\n")
